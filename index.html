@@ -30,6 +30,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             margin-bottom: 30px;
             text-align: center;
+            position: relative;
         }
 
         h1 {
@@ -124,7 +125,18 @@
             background: #dc2626;
         }
 
-        input[type="text"], input[type="date"] {
+        .btn-success {
+            background: #10b981;
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        input[type="text"], input[type="date"], input[type="number"], select {
             padding: 12px;
             border: 2px solid #e0e7ff;
             border-radius: 8px;
@@ -133,7 +145,7 @@
             min-width: 200px;
         }
 
-        input[type="text"]:focus, input[type="date"]:focus {
+        input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus, select:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -251,32 +263,96 @@
         .refresh-btn {
             margin-left: auto;
         }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .modal label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #e0e7ff;
+            border-radius: 8px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+        }
+
+        /* Table number input */
+        .table-number-input {
+            width: 80px;
+            padding: 8px;
+            border: 2px solid #e0e7ff;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .table-number-save {
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🐟 John's Fish and Chips</h1>
+            <h1 id="restaurantTitle">🐟 John's Fish and Chips</h1>
             <p class="subtitle">Reservation Management Dashboard</p>
             <button class="btn btn-secondary" onclick="openSettings()" style="position: absolute; right: 30px; top: 30px;">⚙️ Settings</button>
         </div>
 
         <!-- Settings Modal -->
-        <div id="settingsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-            <div style="background: white; padding: 40px; border-radius: 15px; max-width: 500px; width: 90%;">
-                <h2 style="margin-bottom: 20px;">Restaurant Settings</h2>
-                <label style="display: block; margin-bottom: 10px; font-weight: 600;">Restaurant Name:</label>
-                <input type="text" id="restaurantName" value="John's Fish and Chips" style="width: 100%; padding: 12px; margin-bottom: 20px; border: 2px solid #e0e7ff; border-radius: 8px;">
+        <div id="settingsModal" class="modal">
+            <div class="modal-content">
+                <h2>Restaurant Settings</h2>
+                <label>Name:</label>
+                <input type="text" id="restaurantName" value="John's Fish and Chips">
                 
-                <label style="display: block; margin-bottom: 10px; font-weight: 600;">Total Seats:</label>
-                <input type="number" id="totalSeats" value="90" style="width: 100%; padding: 12px; margin-bottom: 20px; border: 2px solid #e0e7ff; border-radius: 8px;">
+                <label>Seats:</label>
+                <input type="number" id="totalSeats" value="90">
                 
-                <label style="display: block; margin-bottom: 10px; font-weight: 600;">Number of Tables:</label>
-                <input type="number" id="numTables" value="15" style="width: 100%; padding: 12px; margin-bottom: 20px; border: 2px solid #e0e7ff; border-radius: 8px;">
+                <label>Tables:</label>
+                <input type="number" id="numTables" value="15">
                 
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-primary" onclick="saveSettings()" style="flex: 1;">Save</button>
-                    <button class="btn btn-secondary" onclick="closeSettings()" style="flex: 1;">Cancel</button>
+                <div class="modal-buttons">
+                    <button class="btn btn-primary" onclick="saveSettings()">Save</button>
+                    <button class="btn btn-secondary" onclick="closeSettings()">Cancel</button>
                 </div>
             </div>
         </div>
@@ -331,6 +407,7 @@
                         <th>Customer</th>
                         <th>Phone</th>
                         <th>Party Size</th>
+                        <th>Table Number</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -347,6 +424,45 @@
 
         let allReservations = [];
         let filteredReservations = [];
+        let restaurantSettings = {
+            name: "John's Fish and Chips",
+            seats: 90,
+            tables: 15
+        };
+
+        // Load settings from localStorage on page load
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('restaurantSettings');
+            if (savedSettings) {
+                restaurantSettings = JSON.parse(savedSettings);
+                document.getElementById('restaurantName').value = restaurantSettings.name;
+                document.getElementById('totalSeats').value = restaurantSettings.seats;
+                document.getElementById('numTables').value = restaurantSettings.tables;
+                document.getElementById('restaurantTitle').innerHTML = `🐟 ${restaurantSettings.name}`;
+            }
+        }
+
+        // Save settings to localStorage
+        function saveSettings() {
+            restaurantSettings.name = document.getElementById('restaurantName').value;
+            restaurantSettings.seats = parseInt(document.getElementById('totalSeats').value);
+            restaurantSettings.tables = parseInt(document.getElementById('numTables').value);
+            
+            localStorage.setItem('restaurantSettings', JSON.stringify(restaurantSettings));
+            document.getElementById('restaurantTitle').innerHTML = `🐟 ${restaurantSettings.name}`;
+            closeSettings();
+            updateStats(); // Update stats with new capacity
+        }
+
+        // Open settings modal
+        function openSettings() {
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+
+        // Close settings modal
+        function closeSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
 
         async function loadReservations() {
             document.getElementById('loading').style.display = 'block';
@@ -394,12 +510,25 @@
                 const date = new Date(res.reservation_date + 'T00:00:00');
                 const statusClass = res.status === 'confirmed' ? 'status-confirmed' : 'status-cancelled';
                 
+                // Generate table number options
+                let tableOptions = '';
+                for (let i = 1; i <= restaurantSettings.tables; i++) {
+                    const selected = res.table_number === i ? 'selected' : '';
+                    tableOptions += `<option value="${i}" ${selected}>Table ${i}</option>`;
+                }
+                
                 row.innerHTML = `
                     <td>${date.toLocaleDateString('en-GB')}</td>
                     <td><strong>${res.reservation_time}</strong></td>
                     <td>${res.customer_name}</td>
                     <td>${res.customer_phone}</td>
                     <td><strong>${res.party_size} people</strong></td>
+                    <td>
+                        <select class="table-number-input" id="table-${res.id}" onchange="updateTableNumber('${res.id}')">
+                            <option value="">Not assigned</option>
+                            ${tableOptions}
+                        </select>
+                    </td>
                     <td><span class="status-badge ${statusClass}">${res.status}</span></td>
                     <td>
                         ${res.status === 'confirmed' ? 
@@ -410,6 +539,41 @@
                 `;
                 tbody.appendChild(row);
             });
+        }
+
+        async function updateTableNumber(reservationId) {
+            const tableSelect = document.getElementById(`table-${reservationId}`);
+            const tableNumber = tableSelect.value ? parseInt(tableSelect.value) : null;
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/reservations?id=eq.${reservationId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({ table_number: tableNumber })
+                });
+
+                if (response.ok) {
+                    // Update the local data
+                    const reservation = allReservations.find(r => r.id === reservationId);
+                    if (reservation) {
+                        reservation.table_number = tableNumber;
+                    }
+                } else {
+                    alert('Failed to update table number');
+                    // Revert the select to its previous value
+                    loadReservations();
+                }
+            } catch (error) {
+                console.error('Error updating table number:', error);
+                alert('Error updating table number');
+                // Revert the select to its previous value
+                loadReservations();
+            }
         }
 
         function updateStats() {
@@ -423,7 +587,7 @@
             );
 
             const todayGuests = todayReservations.reduce((sum, r) => sum + r.party_size, 0);
-            const capacityUsed = Math.round((todayGuests / 90) * 100);
+            const capacityUsed = Math.round((todayGuests / restaurantSettings.seats) * 100);
 
             document.getElementById('todayCount').textContent = todayReservations.length;
             document.getElementById('todayGuests').textContent = todayGuests;
@@ -507,8 +671,11 @@
             }
         }
 
-        // Load reservations on page load
-        loadReservations();
+        // Load settings and reservations on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSettings();
+            loadReservations();
+        });
 
         // Auto-refresh every 30 seconds
         setInterval(loadReservations, 30000);
